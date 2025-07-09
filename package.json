@@ -2,11 +2,14 @@
   "name": "threejs-vue-test",
   "version": "0.0.0",
   "private": true,
+  "homepage": "https://vadim6969.github.io/testovoeThreeJs",
   "scripts": {
     "build": "vue-tsc && vite build",
     "dev": "vite",
     "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "vue": "^3.4.0",
