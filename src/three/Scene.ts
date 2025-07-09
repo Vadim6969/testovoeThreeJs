@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Door } from './objects/Door'
 import { GeometricShapes } from './objects/GeometricShapes'
 import { Lighting } from './objects/Lighting'
@@ -7,7 +8,7 @@ export class ThreeScene {
   private scene: THREE.Scene
   private camera: THREE.PerspectiveCamera
   private renderer: THREE.WebGLRenderer
-  private controls: any
+  private controls: OrbitControls | null = null
   private animationId: number = 0
 
   // Объекты сцены
@@ -15,11 +16,17 @@ export class ThreeScene {
   private shapes: GeometricShapes
   private lighting: Lighting
   private floor: THREE.Mesh
+  
+  private cubeCamera: THREE.CubeCamera
+  private cubeRenderTarget: THREE.WebGLCubeRenderTarget
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new THREE.Scene()
     this.camera = this.createCamera()
     this.renderer = this.createRenderer(canvas)
+    
+    this.cubeRenderTarget = new THREE.WebGLCubeRenderTarget(512)
+    this.cubeCamera = new THREE.CubeCamera(0.1, 1000, this.cubeRenderTarget)
     
     this.floor = this.createFloor()
     this.door = new Door()
@@ -28,6 +35,7 @@ export class ThreeScene {
 
     this.setupScene()
     this.setupControls()
+    this.setupReflections()
   }
 
   private createCamera(): THREE.PerspectiveCamera {
@@ -77,8 +85,7 @@ export class ThreeScene {
     this.lighting.addToScene(this.scene)
   }
 
-  private async setupControls() {
-    const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
+  private setupControls() {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.enableDamping = true
     this.controls.dampingFactor = 0.05
@@ -87,6 +94,13 @@ export class ThreeScene {
     this.controls.minDistance = 2
     this.controls.maxDistance = 20
     this.controls.update()
+  }
+
+  private setupReflections() {
+    this.cubeCamera.position.set(0, 1, 0)
+    this.scene.add(this.cubeCamera)
+    
+    this.shapes.updateReflections(this.cubeRenderTarget.texture)
   }
 
   public animate() {
@@ -98,6 +112,8 @@ export class ThreeScene {
 
     const time = Date.now() * 0.001
     this.shapes.animateShapes(time)
+
+    this.cubeCamera.update(this.renderer, this.scene)
 
     this.renderer.render(this.scene, this.camera)
   }
